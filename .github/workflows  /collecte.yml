@@ -25,7 +25,7 @@ jobs:
         run: pip install requests pandas
 
       - name: Lancer la collecte
-        run: python Collecte_Poly.py
+        run: python Collecte.py
 
       - name: Commit et push du CSV
         run: |
