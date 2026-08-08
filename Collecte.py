@@ -101,7 +101,3 @@ with open(csv_file, mode="a", newline="", encoding="utf-8") as file:
     writer.writerows(results)
 
 print(f"\\nLes résultats ont été ajoutés dans : {csv_file}")
-    writer.writeheader()
-    writer.writerows(results)
-
-print(f"\\nLes résultats ont été enregistrés dans : {csv_file}")
