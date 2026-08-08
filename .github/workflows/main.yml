@@ -1,4 +1,4 @@
-name: Collecte Poly
+name: Main
 
 on:
   schedule:
