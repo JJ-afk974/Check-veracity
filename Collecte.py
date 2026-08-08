@@ -1,5 +1,6 @@
 import requests
 import csv
+import os
 from datetime import datetime, timedelta
 from collections import defaultdict
 
@@ -73,10 +74,13 @@ for station_name, lat, lon, api_key in stations:
         print(f"\\n=== {station_name} ===")
         print(f"Erreur lors de l'appel API : {e}")
 
-# Enregistrement dans un fichier CSV
+# Enregistrement dans un fichier CSV (ajout sans écraser)
 csv_file = "temperatures_3jours.csv"
 
-with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
+# Vérifie si le fichier existe déjà
+file_exists = os.path.isfile(csv_file)
+
+with open(csv_file, mode="a", newline="", encoding="utf-8") as file:
     writer = csv.DictWriter(
         file,
         fieldnames=[
@@ -88,6 +92,15 @@ with open(csv_file, mode="w", newline="", encoding="utf-8") as file:
             "Tmax"
         ]
     )
+
+    # Écrit l'en-tête uniquement si le fichier est nouveau
+    if not file_exists:
+        writer.writeheader()
+
+    # Ajoute les nouvelles lignes à la fin du fichier
+    writer.writerows(results)
+
+print(f"\\nLes résultats ont été ajoutés dans : {csv_file}")
     writer.writeheader()
     writer.writerows(results)
 
