@@ -93,12 +93,12 @@ with open(csv_file, mode="a", newline="", encoding="utf-8") as file:
         ]
     )
 
-    # Écrit l'en-tête uniquement si le fichier est nouveau
-    if not file_exists:
-        writer.writeheader()
+# Écrit l'en-tête uniquement si le fichier est nouveau
+if not file_exists:
+    writer.writeheader()
 
-    # Ajoute les nouvelles lignes à la fin du fichier
-    writer.writerows(results)
+# Ajoute les nouvelles lignes à la fin du fichier
+writer.writerows(results)
 
 print(f"\\nLes résultats ont été ajoutés dans : {csv_file}")
     writer.writeheader()
