@@ -1,8 +1,6 @@
 name: Main
 
 on:
-  schedule:
-    - cron: "*/5 * * * *"
   workflow_dispatch:
   repository_dispatch:
     types: [collecte-manuelle]
