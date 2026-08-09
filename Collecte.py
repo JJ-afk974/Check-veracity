@@ -24,7 +24,7 @@ for station_name, lat, lon, api_key in stations:
         "https://api.weather.com/v3/wx/forecast/hourly/15day"
         f"?apiKey={api_key}"
         f"&geocode={lat},{lon}"
-        "&units=m&language=en-US&format=json"
+        "&units=h&language=en-US&format=json"
     )
 
     try:
