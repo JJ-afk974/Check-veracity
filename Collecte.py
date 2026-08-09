@@ -6,30 +6,30 @@ from collections import defaultdict
 
 # Liste des stations : nom, latitude, longitude, apiKey
 stations = [
-    ("Paris", 48.986, 2.449, "e1f10a1e78da46f5b10a1e78da96f525"),
-    ("Londres", 51.51, 0.028, "e1f10a1e78da46f5b10a1e78da96f525"),
-    ("Tokyo", 35.55, 139.784, "e1f10a1e78da46f5b10a1e78da96f525"),
-    ("Seoul", 37.4943, 126.4905, "e1f10a1e78da46f5b10a1e78da96f525"),
-    ("New York", 40.761, -73.864, "e1f10a1e78da46f5b10a1e78da96f525"),
-    ("Miami", 25.848, -80.242, "e1f10a1e78da46f5b10a1e78da96f525"),
+    ("Paris", 48.986, 2.449, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
+    ("Londres", 51.51, 0.028, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
+    ("Tokyo", 35.55, 139.784, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
+    ("Seoul", 37.4943, 126.4905, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
+    ("New York", 40.761, -73.864, "e1f10a1e78da46f5b10a1e78da96f525", "e"),
+    ("Miami", 25.848, -80.242, "e1f10a1e78da46f5b10a1e78da96f525", "e"),
 ]
 
-today = datetime.now().date()
+today = (datetime.now() + timedelta(hours=2)).date()
 
 # Liste qui contiendra les résultats pour le CSV
 results = []
 
-for station_name, lat, lon, api_key in stations:
+for station_name, lat, lon, api_key, units in stations:
     url = (
         "https://api.weather.com/v3/wx/forecast/hourly/15day"
         f"?apiKey={api_key}"
         f"&geocode={lat},{lon}"
-        "&units=h&language=en-US&format=json"
+        f"&units={units}&language=en-US&format=json"
     )
 
     try:
         # Date et heure de la requête
-        request_time = datetime.now()
+        request_time = datetime.now() + timedelta(hours=2)
 
         response = requests.get(url, timeout=10)
         response.raise_for_status()
