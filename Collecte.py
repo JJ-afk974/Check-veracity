@@ -19,6 +19,7 @@ stations = [
     ("Chicago", 41.977, -87.905, "e1f10a1e78da46f5b10a1e78da96f525", "e"),
     ("Houston", 29.634, -95.246, "e1f10a1e78da46f5b10a1e78da96f525", "e"),
     ("Seattle", 47.441, -122.3, "e1f10a1e78da46f5b10a1e78da96f525", "e"),
+    ("Atlanta", 33.639, -84.405, "e1f10a1e78da46f5b10a1e78da96f525", "e"),
     ("San Francisco", 37.616, -122.389, "e1f10a1e78da46f5b10a1e78da96f525", "e"),
 ]
 
