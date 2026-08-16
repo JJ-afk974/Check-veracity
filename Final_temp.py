@@ -1,6 +1,7 @@
 import urllib.request
 import urllib.parse
 import json
+import csv
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
@@ -9,7 +10,6 @@ UNITS = "m"  # "m" = Celsius, "e" = Fahrenheit
 
 BASE_URL = "https://api.weather.com/v1/location/{location}/observations/historical.json"
 
-# Villes à analyser
 CITIES = {
     "New York": {
         "location": "KLGA:9:US",
@@ -37,74 +37,101 @@ CITIES = {
     },
 }
 
-for city, config in CITIES.items():
+OUTPUT_FILE = "temperatures_veille.csv"
 
-    location = config["location"]
-    tz = ZoneInfo(config["timezone"])
+# Création du fichier CSV
+with open(OUTPUT_FILE, "w", newline="", encoding="utf-8-sig") as f:
 
-    # Date de la veille dans le fuseau horaire de la ville
-    yesterday = datetime.now(tz).date() - timedelta(days=1)
-    date_str = yesterday.strftime("%Y%m%d")
+    writer = csv.writer(f, delimiter=";")
 
-    url = (
-        BASE_URL.format(location=location)
-        + "?"
-        + urllib.parse.urlencode({
-            "apiKey": API_KEY,
-            "units": UNITS,
-            "startDate": date_str,
-            "endDate": date_str,
-        })
-    )
+    writer.writerow([
+        "ville",
+        "date",
+        "temperature_min",
+        "heure_min",
+        "temperature_max",
+        "heure_max"
+    ])
 
-    try:
-        with urllib.request.urlopen(url) as response:
-            data = json.loads(response.read().decode("utf-8"))
+    for city, config in CITIES.items():
 
-        observations = data.get("observations", [])
+        location = config["location"]
+        tz = ZoneInfo(config["timezone"])
 
-        temperatures = []
+        # Date de la veille dans le fuseau horaire de la ville
+        yesterday = datetime.now(tz).date() - timedelta(days=1)
+        date_str = yesterday.strftime("%Y%m%d")
 
-        for obs in observations:
+        url = (
+            BASE_URL.format(location=location)
+            + "?"
+            + urllib.parse.urlencode({
+                "apiKey": API_KEY,
+                "units": UNITS,
+                "startDate": date_str,
+                "endDate": date_str,
+            })
+        )
 
-            temp = obs.get("temp")
-            ts = obs.get("valid_time_gmt")
+        try:
+            with urllib.request.urlopen(url) as response:
+                data = json.loads(response.read().decode("utf-8"))
 
-            if temp is None or ts is None:
-                continue
+            observations = data.get("observations", [])
 
-            # UTC -> heure locale de la ville
-            dt_local = datetime.fromtimestamp(
-                ts,
-                tz=timezone.utc
-            ).astimezone(tz)
+            temperatures = []
 
-            # On garde uniquement les observations de la veille
-            if dt_local.date() == yesterday:
-                temperatures.append((temp, dt_local))
+            for obs in observations:
 
-        if temperatures:
+                temp = obs.get("temp")
+                ts = obs.get("valid_time_gmt")
 
-            # Maximum
-            max_temp, max_time = max(
-                temperatures,
-                key=lambda x: x[0]
-            )
+                if temp is None or ts is None:
+                    continue
 
-            # Minimum
-            min_temp, min_time = min(
-                temperatures,
-                key=lambda x: x[0]
-            )
+                # Conversion UTC -> heure locale
+                dt_local = datetime.fromtimestamp(
+                    ts,
+                    tz=timezone.utc
+                ).astimezone(tz)
 
-            print(f"\n{city}")
-            print("-" * len(city))
-            print(f"Date       : {yesterday}")
-            print(f"Maximale   : {max_temp} °C à {max_time.strftime('%H:%M')}")
-            print(f"Minimale   : {min_temp} °C à {min_time.strftime('%H:%M')}")
+                # On garde uniquement les observations de la veille
+                if dt_local.date() == yesterday:
+                    temperatures.append((temp, dt_local))
 
-        else:
-            print(f"\n{city} : aucune observation disponible")
+            if temperatures:
 
-    except Exception as e:
-        print(f"\n{city} : ERREUR - {e}")
+                # Température minimale
+                min_temp, min_time = min(
+                    temperatures,
+                    key=lambda x: x[0]
+                )
+
+                # Température maximale
+                max_temp, max_time = max(
+                    temperatures,
+                    key=lambda x: x[0]
+                )
+
+                writer.writerow([
+                    city,
+                    yesterday.strftime("%Y-%m-%d"),
+                    min_temp,
+                    min_time.strftime("%H:%M:%S"),
+                    max_temp,
+                    max_time.strftime("%H:%M:%S")
+                ])
+
+                print(
+                    f"{city}: "
+                    f"min {min_temp}°C à {min_time.strftime('%H:%M')} | "
+                    f"max {max_temp}°C à {max_time.strftime('%H:%M')}"
+                )
+
+            else:
+                print(f"{city}: aucune observation disponible")
+
+        except Exception as e:
+            print(f"{city}: ERREUR - {e}")
+
+print(f"\nTerminé : {OUTPUT_FILE} créé.")
