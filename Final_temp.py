@@ -17,7 +17,7 @@ CITIES = {
         "unit_label": "°F",
     },
     "Londres": {
-        "location": "EGLC:9:UK",
+        "location": "EGLC:9:GB",
         "timezone": "Europe/London",
         "units": "m",
         "unit_label": "°C",
