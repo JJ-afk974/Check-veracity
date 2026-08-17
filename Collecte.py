@@ -8,6 +8,12 @@ from collections import defaultdict
 stations = [
     ("Paris", 48.986, 2.449, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
     ("Londres", 51.51, 0.028, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
+    ("Madrid", 40.452, -3.584, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
+    ("Milan", 45.626, 8.696, "e1f10a1e78da46f5b10a1e78da96f525", "m"),    
+    ("Munich", 48.354, 11.792, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
+    ("Amsterdam", 52.31, 4.765, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
+    ("Varsovie", 52.169, 20.979, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
+    ("Helsinski", 60.317, 24.967, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
     ("Tokyo", 35.55, 139.784, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
     ("Seoul", 37.4943, 126.4905, "e1f10a1e78da46f5b10a1e78da96f525", "m"),
     ("New York", 40.761, -73.864, "e1f10a1e78da46f5b10a1e78da96f525", "e"),
