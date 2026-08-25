@@ -33,10 +33,19 @@ stations = [
 ]
 
 
+# ============================================================
+# PARAMÈTRES
+# ============================================================
+
+# Nombre de jours à analyser
 NB_JOURS = 3
 
-# Seuils
+# Probabilité de pluie minimale
+# IMPORTANT : > 50 %, donc 50 % exactement n'est PAS retenu
 SEUIL_PLUIE = 50
+
+# Chute de température minimale
+# IMPORTANT : > 5 °C, donc -5 °C exactement n'est PAS retenu
 SEUIL_BAISSE_TEMPERATURE = 5
 
 
@@ -49,7 +58,7 @@ today = request_time.date()
 
 
 # ============================================================
-# RÉSULTATS
+# LISTE DES RÉSULTATS
 # ============================================================
 
 results = []
@@ -61,9 +70,10 @@ results = []
 
 for station_name, lat, lon, api_key, units in stations:
 
-    print(f"\n{'=' * 60}")
+    print()
+    print("=" * 60)
     print(f"=== {station_name} ===")
-    print(f"{'=' * 60}")
+    print("=" * 60)
 
     url = (
         "https://api.weather.com/v3/wx/forecast/hourly/15day"
@@ -76,14 +86,22 @@ for station_name, lat, lon, api_key, units in stations:
 
     try:
 
-        response = requests.get(url, timeout=10)
+        # --------------------------------------------------------
+        # APPEL API
+        # --------------------------------------------------------
+
+        response = requests.get(
+            url,
+            timeout=10
+        )
+
         response.raise_for_status()
 
         data = response.json()
 
 
         # --------------------------------------------------------
-        # DONNÉES HORAIRES
+        # RÉCUPÉRATION DES DONNÉES
         # --------------------------------------------------------
 
         times = data["validTimeLocal"]
@@ -113,10 +131,16 @@ for station_name, lat, lon, api_key, units in stations:
 
         for i in range(len(times)):
 
-            dt = datetime.fromisoformat(times[i])
+            dt = datetime.fromisoformat(
+                times[i]
+            )
 
-            # Seulement les 3 prochains jours
-            if today <= dt.date() <= today + timedelta(days=NB_JOURS - 1):
+            # On garde uniquement les 3 prochains jours
+            if (
+                today
+                <= dt.date()
+                <= today + timedelta(days=NB_JOURS - 1)
+            ):
 
                 hourly_data.append({
                     "datetime": dt,
@@ -127,14 +151,17 @@ for station_name, lat, lon, api_key, units in stations:
                 })
 
 
-        # Sécurité : tri chronologique
+        # --------------------------------------------------------
+        # TRI CHRONOLOGIQUE
+        # --------------------------------------------------------
+
         hourly_data.sort(
             key=lambda x: x["datetime"]
         )
 
 
         # --------------------------------------------------------
-        # ANALYSE HORAIRE
+        # ANALYSE DES HEURES
         # --------------------------------------------------------
 
         previous_temperature = None
@@ -151,7 +178,7 @@ for station_name, lat, lon, api_key, units in stations:
 
 
             # ====================================================
-            # CONDITION 1 : PLUIE > 50 %
+            # 1. PLUIE > 50 %
             # ====================================================
 
             pluie = (
@@ -161,13 +188,16 @@ for station_name, lat, lon, api_key, units in stations:
 
 
             # ====================================================
-            # CONDITION 2 : CHUTE DE TEMPÉRATURE > 5°C EN 1H
+            # 2. CHUTE DE TEMPÉRATURE > 5 °C EN 1 HEURE
             # ====================================================
 
             temperature_previous = None
             variation_temperature = None
             chute_temperature = False
 
+
+            # On ne compare que si l'heure précédente
+            # est exactement une heure avant
             if (
                 previous_temperature is not None
                 and previous_datetime is not None
@@ -177,20 +207,38 @@ for station_name, lat, lon, api_key, units in stations:
                 temperature_previous = previous_temperature
 
                 variation_temperature = (
-                    temperature - previous_temperature
+                    temperature
+                    - previous_temperature
                 )
 
-                if variation_temperature < -SEUIL_BAISSE:
+                # Exemple :
+                #
+                # 20°C -> 14°C
+                # variation = -6°C
+                # -6 < -5 => TRUE
+                #
+                if (
+                    variation_temperature
+                    < -SEUIL_BAISSE_TEMPERATURE
+                ):
+
                     chute_temperature = True
 
 
             # ====================================================
-            # ON NE CONSERVE QUE LES LIGNES INTÉRESSANTES
+            # 3. CONSERVATION UNIQUEMENT DES ÉVÉNEMENTS
             # ====================================================
 
             if pluie or chute_temperature:
 
-                jour = f"J+{(dt.date() - today).days}"
+                jour = (
+                    f"J+{(dt.date() - today).days}"
+                )
+
+
+                # ------------------------------------------------
+                # CRÉATION DE LA LIGNE CSV
+                # ------------------------------------------------
 
                 result = {
 
@@ -212,28 +260,32 @@ for station_name, lat, lon, api_key, units in stations:
 
                     "Temperature": temperature,
 
-                    "Temperature_precedente": temperature_previous,
+                    "Temperature_precedente":
+                        temperature_previous,
 
-                    "Variation_temperature": variation_temperature,
+                    "Variation_temperature":
+                        variation_temperature,
 
-                    "Chute_temperature": (
+                    "Chute_temperature":
                         "OUI"
                         if chute_temperature
-                        else "NON"
-                    ),
+                        else "NON",
 
-                    "Probabilite_pluie": precip_chance,
+                    "Probabilite_pluie":
+                        precip_chance,
 
-                    "Type_precipitation": precip_type,
+                    "Type_precipitation":
+                        precip_type,
 
-                    "Pluie_mm": rain_amount,
+                    "Pluie_mm":
+                        rain_amount,
 
-                    "Pluie_sup_50": (
+                    "Pluie_sup_50":
                         "OUI"
                         if pluie
                         else "NON"
-                    )
                 }
+
 
                 results.append(result)
 
@@ -246,18 +298,22 @@ for station_name, lat, lon, api_key, units in stations:
 
                     print(
                         f"🌧 {dt.strftime('%Y-%m-%d %H:%M')} "
-                        f"| {precip_chance}% de pluie"
-                        f" | {temperature}°C"
+                        f"| {precip_chance}% "
+                        f"| Temp : {temperature}°C "
+                        f"| Pluie : {rain_amount}"
                     )
+
 
                 if chute_temperature:
 
                     print(
                         f"🌡️ BAISSE "
                         f"{dt.strftime('%Y-%m-%d %H:%M')} "
-                        f"| {temperature_previous}°C → "
+                        f"| "
+                        f"{temperature_previous}°C → "
                         f"{temperature}°C "
-                        f"| {variation_temperature:+.1f}°C"
+                        f"| "
+                        f"{variation_temperature:+.1f}°C"
                     )
 
 
@@ -269,6 +325,10 @@ for station_name, lat, lon, api_key, units in stations:
             previous_datetime = dt
 
 
+    # ============================================================
+    # GESTION DES ERREURS
+    # ============================================================
+
     except requests.RequestException as e:
 
         print(
@@ -278,7 +338,8 @@ for station_name, lat, lon, api_key, units in stations:
     except (KeyError, ValueError) as e:
 
         print(
-            f"Erreur dans les données de {station_name} : {e}"
+            f"Erreur dans les données de "
+            f"{station_name} : {e}"
         )
 
 
@@ -288,7 +349,9 @@ for station_name, lat, lon, api_key, units in stations:
 
 csv_file = "alertes_meteo_3jours.csv"
 
-file_exists = os.path.isfile(csv_file)
+file_exists = os.path.isfile(
+    csv_file
+)
 
 
 fieldnames = [
@@ -320,6 +383,8 @@ with open(
         fieldnames=fieldnames
     )
 
+    # En-tête uniquement lors de la création
+    # du fichier
     if not file_exists:
         writer.writeheader()
 
@@ -330,10 +395,12 @@ with open(
 # FIN
 # ============================================================
 
+print()
+print("=" * 60)
 print(
-    f"\nTerminé : {len(results)} lignes ajoutées."
+    f"Terminé : {len(results)} lignes ajoutées."
 )
-
 print(
     f"Fichier : {csv_file}"
 )
+print("=" * 60)
